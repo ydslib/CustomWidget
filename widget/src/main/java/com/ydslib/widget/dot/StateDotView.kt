@@ -69,18 +69,18 @@ class StateDotView : View {
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
 
-        //画圆
-        val cx = width / 2f
-        val cy = height / 2f
-        if (cx < cy) {
-            canvas?.drawCircle(cx, cy, cx, mCirclePaint)
-        } else {
-            canvas?.drawCircle(cx, cy, cy, mCirclePaint)
-        }
-//        val cx = mCx ?: 0f
-//        val cy = mCy ?: 0f
-//        val r = mRadius ?: 0f
-//        canvas?.drawCircle(cx, cy, r, mCirclePaint)
+//        //画圆
+//        val cx = width / 2f
+//        val cy = height / 2f
+//        if (cx < cy) {
+//            canvas?.drawCircle(cx, cy, cx, mCirclePaint)
+//        } else {
+//            canvas?.drawCircle(cx, cy, cy, mCirclePaint)
+//        }
+        val cx = mCx ?: (width / 2f)  // cx=85 mCx = 85 width = 60
+        val cy = mCy ?: (height / 2f) //cy = 30 mCy = 30  height = 60
+        val r = mRadius ?: cx.coerceAtMost(cy)
+        canvas?.drawCircle(cx, cy, r, mCirclePaint)
 
 
         val widthDivide = width / 40f
@@ -125,10 +125,10 @@ class StateDotView : View {
         val widthMode = MeasureSpec.getMode(widthMeasureSpec)
         val heightMode = MeasureSpec.getMode(heightMeasureSpec)
         if (widthMode == MeasureSpec.AT_MOST) {
-            width = (mRadius?.toInt() ?: 0) + paddingStart + paddingEnd
+            width = (mRadius?.toInt() ?: 0) * 2 + paddingStart + paddingEnd
         }
         if (heightMode == MeasureSpec.AT_MOST) {
-            height = (mRadius?.toInt() ?: 0) + paddingTop + paddingBottom
+            height = (mRadius?.toInt() ?: 0) * 2 + paddingTop + paddingBottom
         }
         setMeasuredDimension(width, height)
     }

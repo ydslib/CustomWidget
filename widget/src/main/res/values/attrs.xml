@@ -18,5 +18,8 @@
         <attr name="dotViewText" format="string"/>
         <attr name="dotTextColor" format="color"/>
         <attr name="dotTextSize" format="dimension"/>
+        <attr name="textPaddingVertical" format="dimension"/>
+        <attr name="textPaddingHorizontal" format="dimension"/>
+        <attr name="stateStrokeWidth" format="dimension"/>
     </declare-styleable>
 </resources>
