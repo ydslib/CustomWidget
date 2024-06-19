@@ -13,16 +13,34 @@ import kotlin.math.ceil
 
 class TextStateDotView : View {
 
+    /**
+     * 圆的半径
+     */
     private var mDotViewRadius: Int = 0
 
+    /**
+     * 按钮文本
+     */
     private var mDotText: CharSequence? = null
 
+    /**
+     * 文本的字体大小
+     */
     private var mDotTextSize: Int = 16
 
+    /**
+     * 文本的字体颜色
+     */
     private var mCurTextColor: Int = Color.BLACK
 
+    /**
+     * 文本的水平padding
+     */
     private var mTextPaddingHorizontal = 30
 
+    /**
+     * 文本的垂直padding
+     */
     private var mTextPaddingVertical = 20
 
 
@@ -53,7 +71,7 @@ class TextStateDotView : View {
     private var mTextBgColor: Int = -1
 
     /**
-     *
+     * 圆点的背景色
      */
     private var mDotBgColor: Int = -1
 
@@ -64,6 +82,9 @@ class TextStateDotView : View {
         Paint()
     }
 
+    /**
+     * 圆点中间图案的线条宽度
+     */
     private var mStateStrokeWidth = -1
 
 
@@ -77,6 +98,9 @@ class TextStateDotView : View {
      */
     private val mLineTextBound by lazy { Rect() }
 
+    /**
+     * 用于带圆角的方形
+     */
     private val mRoundRectF by lazy {
         RectF()
     }
@@ -96,10 +120,19 @@ class TextStateDotView : View {
      */
     private var drawTextHeight = 0
 
+    /**
+     * 文本列表
+     */
     private val mTextList = ArrayList<String>()
 
+    /**
+     * 行数
+     */
     private var lineNum = 0
 
+    /**
+     * 半径，用于记录上一次的半径
+     */
     private var mRadius = 0
 
     constructor(context: Context) : this(context, null)
@@ -229,31 +262,39 @@ class TextStateDotView : View {
             //画圆
             val cx = right
             val cy = top //cy = 30 mCy = 30  height = 60
-            val r = mDotViewRadius.toFloat()
-            canvas?.drawCircle(cx, cy, r, mCirclePaint)
-
-            val widthDivide = mDotViewRadius / 20f
-            val heightDivide = mDotViewRadius / 20f
-
-            val baseX = cx - mDotViewRadius
-            val baseY = cy - mDotViewRadius
-
-            //前半截
-            var startX = 11 * widthDivide + baseX
-            var startY = 18 * heightDivide + baseY
-            var stopX = 18 * widthDivide + baseX
-            var stopY = 24 * heightDivide + baseY
-
-            canvas?.drawLine(startX, startY, stopX, stopY, mStatePaint)
-
-            //后半截
-            startX = stopX
-            startY = stopY
-            stopX = 29 * widthDivide + baseX
-            stopY = 14 * heightDivide + baseY
-            canvas?.drawLine(startX, startY, stopX, stopY, mStatePaint)
+            drawCheckCircle(canvas, cx, cy)
         }
 
+    }
+
+    /**
+     * 画带对钩的圆
+     */
+    private fun drawCheckCircle(canvas: Canvas?, cx: Float, cy: Float) {
+
+        val r = mDotViewRadius.toFloat()
+        canvas?.drawCircle(cx, cy, r, mCirclePaint)
+
+        val widthDivide = mDotViewRadius / 20f
+        val heightDivide = mDotViewRadius / 20f
+
+        val baseX = cx - mDotViewRadius
+        val baseY = cy - mDotViewRadius
+
+        //前半截
+        var startX = 11 * widthDivide + baseX
+        var startY = 18 * heightDivide + baseY
+        var stopX = 18 * widthDivide + baseX
+        var stopY = 24 * heightDivide + baseY
+
+        canvas?.drawLine(startX, startY, stopX, stopY, mStatePaint)
+
+        //后半截
+        startX = stopX
+        startY = stopY
+        stopX = 29 * widthDivide + baseX
+        stopY = 14 * heightDivide + baseY
+        canvas?.drawLine(startX, startY, stopX, stopY, mStatePaint)
     }
 
 
