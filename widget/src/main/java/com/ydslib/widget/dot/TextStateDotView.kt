@@ -235,8 +235,6 @@ class TextStateDotView : View {
         if (mTextList.isNotEmpty()) {
             //获取文字的Rect
             mTextPaint.getTextBounds(mTextList[0], 0, mTextList[0].length, mLineTextBound)
-            //left是去除padding
-            val left = (paddingStart + mTextPaddingHorizontal).toFloat()
             val right = (width - mDotViewRadius).toFloat()
             val top = (mDotViewRadius + paddingTop).toFloat()
             //画外形
@@ -275,11 +273,11 @@ class TextStateDotView : View {
         val r = mDotViewRadius.toFloat()
         canvas?.drawCircle(cx, cy, r, mCirclePaint)
 
-        val widthDivide = mDotViewRadius / 20f
-        val heightDivide = mDotViewRadius / 20f
+        val widthDivide = r / 20f
+        val heightDivide = r / 20f
 
-        val baseX = cx - mDotViewRadius
-        val baseY = cy - mDotViewRadius
+        val baseX = cx - r
+        val baseY = cy - r
 
         //前半截
         var startX = 11 * widthDivide + baseX

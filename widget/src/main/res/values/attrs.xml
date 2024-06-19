@@ -5,21 +5,22 @@
     </declare-styleable>
 
     <declare-styleable name="StateDotView">
-        <attr name="stateDotColor" format="color" />
+        <attr name="stateDotColor" format="color|reference" />
+        <attr name="dotState" format="string" />
     </declare-styleable>
 
     <declare-styleable name="CTextView">
-        <attr name="textColor" format="color"/>
-        <attr name="textSize" format="dimension"/>
+        <attr name="textColor" format="color" />
+        <attr name="textSize" format="dimension" />
     </declare-styleable>
 
     <declare-styleable name="TextStateDotView">
-        <attr name="dotViewRadius" format="dimension"/>
-        <attr name="dotViewText" format="string"/>
-        <attr name="dotTextColor" format="color"/>
-        <attr name="dotTextSize" format="dimension"/>
-        <attr name="textPaddingVertical" format="dimension"/>
-        <attr name="textPaddingHorizontal" format="dimension"/>
-        <attr name="stateStrokeWidth" format="dimension"/>
+        <attr name="dotViewRadius" format="dimension" />
+        <attr name="dotViewText" format="string" />
+        <attr name="dotTextColor" format="color" />
+        <attr name="dotTextSize" format="dimension" />
+        <attr name="textPaddingVertical" format="dimension" />
+        <attr name="textPaddingHorizontal" format="dimension" />
+        <attr name="stateStrokeWidth" format="dimension" />
     </declare-styleable>
 </resources>

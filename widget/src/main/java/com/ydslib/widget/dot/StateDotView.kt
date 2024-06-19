@@ -16,6 +16,18 @@ import com.ydslib.widget.R
  */
 class StateDotView : View {
 
+    companion object {
+        /**
+         * 对钩
+         */
+        const val STATE_CHECK = "Check"
+
+        /**
+         * 叉叉
+         */
+        const val STATE_FORK = "Fork"
+    }
+
     /**
      * 画圆的画笔
      */
@@ -42,21 +54,23 @@ class StateDotView : View {
     //当前颜色
     private var mCurDotColor: Int = Color.BLACK
 
+    private var mState: String = STATE_CHECK
+
     constructor(context: Context) : this(context, null)
 
     constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, 0)
 
     constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
         val a = context.obtainStyledAttributes(attrs, R.styleable.StateDotView)
-        val color = a.getColor(R.styleable.StateDotView_stateDotColor, Color.BLACK)
-        mCurDotColor = color
+        mCurDotColor = a.getColor(R.styleable.StateDotView_stateDotColor, Color.BLACK)
+        mState = a.getString(R.styleable.StateDotView_dotState) ?: STATE_CHECK
         initDefaultStatePaint()
         initCirclePaint()
         a.recycle()
     }
 
     private fun initCirclePaint() {
-        mCirclePaint.color = Color.GREEN
+        mCirclePaint.color = mCurDotColor
     }
 
     private fun initDefaultStatePaint() {
@@ -69,51 +83,73 @@ class StateDotView : View {
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
 
-//        //画圆
-//        val cx = width / 2f
-//        val cy = height / 2f
-//        if (cx < cy) {
-//            canvas?.drawCircle(cx, cy, cx, mCirclePaint)
-//        } else {
-//            canvas?.drawCircle(cx, cy, cy, mCirclePaint)
-//        }
-        val cx = mCx ?: (width / 2f)  // cx=85 mCx = 85 width = 60
-        val cy = mCy ?: (height / 2f) //cy = 30 mCy = 30  height = 60
-        val r = mRadius ?: cx.coerceAtMost(cy)
+        val l = if (width > height) height else width
+        val cx = mCx ?: (l / 2f)
+        val cy = mCy ?: (l / 2f)
+        val r = mRadius ?: (l / 2f)
+        if (mState == STATE_CHECK) {
+            drawCheckCircle(canvas, cx, cy, r)
+        } else {
+            drawForkCircle(canvas, cx, cy, r)
+        }
+    }
+
+    private fun drawForkCircle(canvas: Canvas?, cx: Float, cy: Float, r: Float) {
         canvas?.drawCircle(cx, cy, r, mCirclePaint)
 
+        val widthDivide = r / 16f
+        val heightDivide = r / 16f
 
-        val widthDivide = width / 40f
-        val heightDivide = height / 40f
+        val baseX = cx - r
+        val baseY = cy - r
+
+        //左上
+        var startX = 10 * widthDivide + baseX
+        var startY = 10 * heightDivide + baseY
+        var stopX = 16 * widthDivide + baseX
+        var stopY = 16 * heightDivide + baseY
+
+        canvas?.drawLine(startX, startY, stopX, stopY, mStatePaint)
+
+        // 左下
+        startY = 22 * heightDivide + baseY
+        canvas?.drawLine(startX, startY, stopX, stopY, mStatePaint)
+
+        //右上
+        startX = stopX
+        startY = stopY
+        stopX = 22 * widthDivide + baseX
+        stopY = 10 * heightDivide + baseY
+        canvas?.drawLine(startX, startY, stopX, stopY, mStatePaint)
+
+        //右下
+        stopY = 22 * heightDivide + baseY
+        canvas?.drawLine(startX, startY, stopX, stopY, mStatePaint)
+    }
+
+    private fun drawCheckCircle(canvas: Canvas?, cx: Float, cy: Float, r: Float) {
+
+        canvas?.drawCircle(cx, cy, r, mCirclePaint)
+
+        val widthDivide = r / 20f
+        val heightDivide = r / 20f
+
+        val baseX = cx - r
+        val baseY = cy - r
 
         //前半截
-        var startX = 11 * widthDivide
-        var startY = 18 * heightDivide
-        var stopX = 18 * widthDivide
-        var stopY = 24 * heightDivide
-
-//        if (cx != 0f && cx > r) {
-//            startX = startX + cx - r
-//            stopX = stopX + cx - r
-//        }
-//        if (cy != 0f && cy > r) {
-//            startY = startY + cy - r
-//            stopY = stopY + cy - r
-//        }
+        var startX = 11 * widthDivide + baseX
+        var startY = 18 * heightDivide + baseY
+        var stopX = 18 * widthDivide + baseX
+        var stopY = 24 * heightDivide + baseY
 
         canvas?.drawLine(startX, startY, stopX, stopY, mStatePaint)
 
         //后半截
         startX = stopX
         startY = stopY
-        stopX = 29 * widthDivide
-        stopY = 14 * heightDivide
-//        if (cx != 0f && cx > r) {
-//            stopX = stopX + cx - r
-//        }
-//        if (cy != 0f && cy > r) {
-//            stopY = stopY + cy - r
-//        }
+        stopX = 29 * widthDivide + baseX
+        stopY = 14 * heightDivide + baseY
         canvas?.drawLine(startX, startY, stopX, stopY, mStatePaint)
     }
 
@@ -124,7 +160,7 @@ class StateDotView : View {
         var height = MeasureSpec.getSize(heightMeasureSpec)
         val widthMode = MeasureSpec.getMode(widthMeasureSpec)
         val heightMode = MeasureSpec.getMode(heightMeasureSpec)
-        if (widthMode == MeasureSpec.AT_MOST) {
+        if (widthMode == MeasureSpec.AT_MOST || widthMode == MeasureSpec.UNSPECIFIED) {
             width = (mRadius?.toInt() ?: 0) * 2 + paddingStart + paddingEnd
         }
         if (heightMode == MeasureSpec.AT_MOST) {
@@ -147,6 +183,7 @@ class StateDotView : View {
             inval = true
         }
         if (inval) {
+            mCirclePaint.color = mCurDotColor
             invalidate()
         }
     }
