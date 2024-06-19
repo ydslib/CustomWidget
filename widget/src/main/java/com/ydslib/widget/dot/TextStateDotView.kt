@@ -9,6 +9,7 @@ import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.View
 import com.ydslib.widget.R
+import kotlin.math.ceil
 
 class TextStateDotView : View {
 
@@ -66,11 +67,40 @@ class TextStateDotView : View {
     private var mStateStrokeWidth = -1
 
 
+    /**
+     * 为获取文字总长度
+     */
     private val mBound by lazy { Rect() }
+
+    /**
+     * 为获取一行文字长度
+     */
+    private val mLineTextBound by lazy { Rect() }
 
     private val mRoundRectF by lazy {
         RectF()
     }
+
+    /**
+     * 屏幕高度
+     */
+    private var mScreenHeight: Int = -1
+
+    /**
+     * 屏幕宽度
+     */
+    private var mScreenWidth: Int = -1
+
+    /**
+     * 每行文字绘制的高度
+     */
+    private var drawTextHeight = 0
+
+    private val mTextList = ArrayList<String>()
+
+    private var lineNum = 0
+
+    private var mRadius = 0
 
     constructor(context: Context) : this(context, null)
 
@@ -85,11 +115,21 @@ class TextStateDotView : View {
         mTextPaddingHorizontal = a.getDimensionPixelSize(R.styleable.TextStateDotView_textPaddingHorizontal, 30)
         mTextPaddingVertical = a.getDimensionPixelSize(R.styleable.TextStateDotView_textPaddingVertical, 20)
         mStateStrokeWidth = a.getDimensionPixelSize(R.styleable.TextStateDotView_stateStrokeWidth, -1)
+
+        mRadius = mDotViewRadius
+
         initDefaultStatePaint()
         initCirclePaint()
         initDefaultTextPaint()
         initDefaultTextShapePaint()
+        initDefaultData()
         a.recycle()
+    }
+
+    private fun initDefaultData() {
+        val dm = resources.displayMetrics
+        mScreenHeight = dm.heightPixels
+        mScreenWidth = dm.widthPixels
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -101,11 +141,56 @@ class TextStateDotView : View {
 
         mTextPaint.getTextBounds(mDotText.toString(), 0, mDotText?.length ?: 0, mBound)
 
+        //文字的宽度
+        val mTextWidth = mBound.width()
+        //每次测量重新添加
+        mTextList.clear()
+
+        lineNum = 0
+
+        //文本不为空
+        var mText = mDotText.toString()
+        if (mText.isNotEmpty()) {
+            val paddingHorizontal = paddingStart + paddingEnd + mDotViewRadius + mTextPaddingHorizontal * 2
+            //可显示文本的最大宽度
+            val specMaxWidth = width - paddingHorizontal
+            if (specMaxWidth >= mTextWidth) {
+                lineNum = 1
+                mTextList.add(mText)
+            } else { //超过一行，切割
+                val maxLine = mTextWidth * 1.0f / specMaxWidth
+                //向上取整
+                lineNum = ceil(maxLine).toInt()
+                //每行展示文字的长度，除以maxLine，则每行以最大数展示，除以lineNum，则平分所有字数
+                val lineLength = (mText.length / maxLine).toInt()
+                for (i in 0 until lineNum) {
+                    var lineStr = ""
+                    lineStr = if (mText.length <= lineLength) {
+                        mText
+                    } else {
+                        mText.substring(0, lineLength)
+                    }
+                    mTextList.add(lineStr)
+                    if (mText.isNotEmpty()) {
+                        mText = if (mText.length <= lineLength) "" else mText.substring(lineLength, mText.length)
+                    }
+                }
+            }
+        }
+
+
         if (widthMode == MeasureSpec.AT_MOST) {
-            width = mBound.width() + paddingStart + paddingEnd + mDotViewRadius + mTextPaddingHorizontal * 2
+            val textWidth = if (mTextList.size > 1) {
+                mTextPaint.getTextBounds(mTextList[0], 0, mTextList[0].length, mLineTextBound)
+                mLineTextBound.width()
+            } else {
+                mTextWidth
+            }
+            width = textWidth + paddingStart + paddingEnd + mDotViewRadius + mTextPaddingHorizontal * 2
         }
         if (heightMode == MeasureSpec.AT_MOST || heightMode == MeasureSpec.UNSPECIFIED) {
-            height = mBound.height() + paddingTop + paddingBottom + mDotViewRadius + mTextPaddingVertical * 2
+            val textHeight = mTextList.size * (mBound.bottom - mBound.top)
+            height = textHeight + paddingTop + paddingBottom + mDotViewRadius + mTextPaddingVertical * 2
         }
 
         setMeasuredDimension(width, height)
@@ -114,55 +199,61 @@ class TextStateDotView : View {
     override fun onDraw(canvas: Canvas?) {
         super.onDraw(canvas)
 
-        //画外形
-        val left = (width - mBound.width() - mTextPaddingHorizontal * 2 - mDotViewRadius) / 2f
-        val top = (mDotViewRadius + paddingTop).toFloat()
-        val right = (width - left - mDotViewRadius)
-        val bottom = height - (height - mBound.height() - mTextPaddingVertical * 2 - mDotViewRadius) / 2f
-        mRoundRectF.apply {
-            this.left = left
-            this.top = top
-            this.right = right
-            this.bottom = bottom
+        if (mTextList.isNotEmpty()) {
+            //获取文字的Rect
+            mTextPaint.getTextBounds(mTextList[0], 0, mTextList[0].length, mLineTextBound)
+            //left是去除padding
+            val left = (paddingStart + mTextPaddingHorizontal).toFloat()
+            val right = (width - mDotViewRadius).toFloat()
+            val top = (mDotViewRadius + paddingTop).toFloat()
+            //画外形
+            val bottom =
+                height - (height - mLineTextBound.height() * mTextList.size - mTextPaddingVertical * 2 - mDotViewRadius) / 2f
+            mRoundRectF.apply {
+                this.left = 0f
+                this.top = top
+                this.right = right
+                this.bottom = bottom
+            }
+            canvas?.drawRoundRect(mRoundRectF, 8f, 8f, mTextShapePaint)
+            for (i in 0 until mTextList.size) {
+                //文案居中显示
+                canvas?.drawText(
+                    mTextList[i],
+                    (width - mLineTextBound.width() - mDotViewRadius) / 2f,
+                    (paddingTop + mDotViewRadius + mTextPaddingVertical + mLineTextBound.height() * (i + 1)).toFloat(),
+                    mTextPaint
+                )
+            }
+
+            //画圆
+            val cx = right
+            val cy = top //cy = 30 mCy = 30  height = 60
+            val r = mDotViewRadius.toFloat()
+            canvas?.drawCircle(cx, cy, r, mCirclePaint)
+
+            val widthDivide = mDotViewRadius / 20f
+            val heightDivide = mDotViewRadius / 20f
+
+            val baseX = cx - mDotViewRadius
+            val baseY = cy - mDotViewRadius
+
+            //前半截
+            var startX = 11 * widthDivide + baseX
+            var startY = 18 * heightDivide + baseY
+            var stopX = 18 * widthDivide + baseX
+            var stopY = 24 * heightDivide + baseY
+
+            canvas?.drawLine(startX, startY, stopX, stopY, mStatePaint)
+
+            //后半截
+            startX = stopX
+            startY = stopY
+            stopX = 29 * widthDivide + baseX
+            stopY = 14 * heightDivide + baseY
+            canvas?.drawLine(startX, startY, stopX, stopY, mStatePaint)
         }
-        canvas?.drawRoundRect(mRoundRectF, 8f, 8f, mTextShapePaint)
-        //画文本
-        if (!mDotText.isNullOrEmpty()) {
-            canvas?.drawText(
-                mDotText.toString(),
-                (width - mBound.width() - mDotViewRadius) / 2.0f,
-                (paddingTop + mBound.height() + mDotViewRadius + mTextPaddingVertical).toFloat(),
-                mTextPaint
-            )
-        }
 
-
-        //画圆
-        val cx = right
-        val cy = top //cy = 30 mCy = 30  height = 60
-        val r = mDotViewRadius.toFloat()
-        canvas?.drawCircle(cx, cy, r, mCirclePaint)
-
-        val widthDivide = mDotViewRadius / 20f
-        val heightDivide = mDotViewRadius / 20f
-
-        val baseX = cx - mDotViewRadius
-        val baseY = cy - mDotViewRadius
-
-        //前半截
-        var startX = 11 * widthDivide + baseX
-        var startY = 18 * heightDivide + baseY
-        var stopX = 18 * widthDivide + baseX
-        var stopY = 24 * heightDivide + baseY
-
-        canvas?.drawLine(startX, startY, stopX, stopY, mStatePaint)
-
-        //后半截
-        startX = stopX
-        startY = stopY
-        stopX = 29 * widthDivide + baseX
-        stopY = 14 * heightDivide + baseY
-        canvas?.drawLine(startX, startY, stopX, stopY, mStatePaint)
     }
 
 
@@ -194,6 +285,8 @@ class TextStateDotView : View {
         mTextPaint.textAlign = Paint.Align.LEFT
         mTextPaint.textSize = mDotTextSize.toFloat()
         mTextPaint.getTextBounds(mDotText.toString(), 0, mDotText?.length ?: 0, mBound)
+        val fm = mTextPaint.fontMetrics
+        drawTextHeight = (fm.descent - fm.ascent).toInt()
     }
 
     /**
@@ -227,8 +320,8 @@ class TextStateDotView : View {
     }
 
     fun setDotViewRadius(radius: Int) = apply {
-
         mDotViewRadius = radius
+        mRadius = mDotViewRadius
         invalidate()
     }
 
@@ -254,6 +347,15 @@ class TextStateDotView : View {
             mCirclePaint.color = dotBgColor
             invalidate()
         }
+    }
+
+    fun showDot(showDot: Boolean) = apply {
+        mDotViewRadius = if (showDot) {
+            mRadius
+        } else {
+            0
+        }
+        invalidate()
     }
 
 }
