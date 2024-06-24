@@ -1,7 +1,6 @@
 package com.ydslib.customerwiget
 
 import android.os.Bundle
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import com.ydslib.customerwiget.databinding.ActivityMainBinding
@@ -26,6 +25,10 @@ class MainActivity : AppCompatActivity() {
         mBinding.textStateDotViewV2.setDotViewRadius(20)
             .setDotTextSize(30)
             .setStateStrokeWidth(7)
-            .setDotText("Test test Test test Test test Test test Test test Test test")
+            .setDotText("Test test Test tep Test test Test test Test test Test ty")
+
+        mBinding.timeLineDotView1.setDefaultCheckNode()
+        mBinding.timeLineDotView2.setDefaultCurrentNode()
+        mBinding.timeLineDotView3.setDefaultNotCheckNode()
     }
 }

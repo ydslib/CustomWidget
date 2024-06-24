@@ -5,16 +5,13 @@ import android.content.res.ColorStateList
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.Paint.Style
 import android.util.AttributeSet
 import android.view.View
 import androidx.annotation.ColorInt
 import com.ydslib.widget.R
 
-/**
- * 带有状态的圆圈
- * 比如对钩，叉叉
- */
-class StateDotView : View {
+class TimeLineDotView : View {
 
     companion object {
         /**
@@ -42,6 +39,10 @@ class StateDotView : View {
         Paint()
     }
 
+    private val mLinePaint by lazy {
+        Paint()
+    }
+
     private var mCx: Float? = null
     private var mCy: Float? = null
 
@@ -49,28 +50,34 @@ class StateDotView : View {
 
     private var mDotStateColor: ColorStateList? = null
 
-    private var defaultStrokeWidth = 7f
+    private var defaultStrokeWidth = 3f
 
     //当前颜色
-    private var mCurDotColor: Int = Color.BLACK
+    private var mCurDotColor: Int = Color.parseColor("#367ef4")
 
     private var mState: String = STATE_CHECK
+
+    private var mShowState: Boolean = true
+
+    private val defaultLineHeight = 150
 
     constructor(context: Context) : this(context, null)
 
     constructor(context: Context, attrs: AttributeSet?) : this(context, attrs, 0)
 
     constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
-        val a = context.obtainStyledAttributes(attrs, R.styleable.StateDotView)
-        mCurDotColor = a.getColor(R.styleable.StateDotView_stateDotColor, Color.BLACK)
-        mState = a.getString(R.styleable.StateDotView_dotState) ?: STATE_CHECK
+        val a = context.obtainStyledAttributes(attrs, R.styleable.TimeLineDotView)
+        mRadius = a.getDimensionPixelSize(R.styleable.TimeLineDotView_timeLineRadius, 0).toFloat()
         initDefaultStatePaint()
         initCirclePaint()
+        initDefaultLinePaint()
         a.recycle()
     }
 
     private fun initCirclePaint() {
         mCirclePaint.color = mCurDotColor
+        mCirclePaint.strokeWidth = 4f
+        mCirclePaint.isAntiAlias = true
     }
 
     private fun initDefaultStatePaint() {
@@ -78,6 +85,12 @@ class StateDotView : View {
         mStatePaint.strokeCap = Paint.Cap.ROUND
         mStatePaint.isAntiAlias = true
         mStatePaint.color = Color.WHITE
+    }
+
+    private fun initDefaultLinePaint() {
+        mLinePaint.strokeWidth = 4f
+        mLinePaint.color = Color.parseColor("#367ef4")
+        mStatePaint.isAntiAlias = true
     }
 
     override fun onDraw(canvas: Canvas?) {
@@ -89,17 +102,21 @@ class StateDotView : View {
         val r = mRadius ?: (l / 2f)
         canvas?.drawCircle(cx, cy, r, mCirclePaint)
 
-        when (mState) {
-            STATE_CHECK->{
+        if (mShowState) {
+            if (mState == STATE_CHECK) {
                 drawCheckCircle(canvas, cx, cy, r)
-            }
-            STATE_FORK->{
-                drawForkCircle(canvas, cx, cy, r)
+            } else {
+                drawStateFork(canvas, cx, cy, r)
             }
         }
+        drawTimeLine(canvas, cx, cy + r, cx, height.toFloat())
     }
 
-    private fun drawForkCircle(canvas: Canvas?, cx: Float, cy: Float, r: Float) {
+    private fun drawTimeLine(canvas: Canvas?, startX: Float, startY: Float, endX: Float, endY: Float) {
+        canvas?.drawLine(startX, startY, endX, endY, mLinePaint)
+    }
+
+    private fun drawStateFork(canvas: Canvas?, cx: Float, cy: Float, r: Float) {
 
         val widthDivide = r / 16f
         val heightDivide = r / 16f
@@ -165,10 +182,10 @@ class StateDotView : View {
         val widthMode = MeasureSpec.getMode(widthMeasureSpec)
         val heightMode = MeasureSpec.getMode(heightMeasureSpec)
         if (widthMode == MeasureSpec.AT_MOST || widthMode == MeasureSpec.UNSPECIFIED) {
-            width = (mRadius?.toInt() ?: 0) * 2 + paddingStart + paddingEnd
+            width = ((mRadius ?: 0f) * 2 + paddingStart + paddingEnd + mCirclePaint.strokeWidth).toInt()
         }
         if (heightMode == MeasureSpec.AT_MOST) {
-            height = (mRadius?.toInt() ?: 0) * 2 + paddingTop + paddingBottom
+            height = (mRadius?.toInt() ?: 0) * 2 + paddingTop + paddingBottom + defaultLineHeight
         }
         setMeasuredDimension(width, height)
     }
@@ -197,5 +214,51 @@ class StateDotView : View {
         mCy = cy
         mRadius = radius
     }
+
+    fun setCirclePaintStyle(style: Style) = apply {
+        mCirclePaint.style = style
+        invalidate()
+    }
+
+    fun setShowState(show: Boolean) = apply {
+        if (mShowState != show) {
+            mShowState = show
+            invalidate()
+        }
+    }
+
+    /**
+     * 设置当前节点
+     */
+    fun setDefaultCurrentNode() = apply {
+        mShowState = false
+        mCirclePaint.style = Style.STROKE
+        mCirclePaint.color = Color.parseColor("#367ef4")
+        mLinePaint.color = Color.parseColor("#e5e5e4")
+        invalidate()
+    }
+
+    fun setDefaultCheckNode() = apply {
+        mShowState = true
+        mState = STATE_CHECK
+        mCirclePaint.style = Style.FILL
+        mCirclePaint.color = Color.parseColor("#367ef4")
+        mLinePaint.color = Color.parseColor("#367ef4")
+        invalidate()
+    }
+
+    fun setDefaultNotCheckNode() = apply {
+        mShowState = false
+        mCirclePaint.style = Style.STROKE
+        mCirclePaint.color = Color.parseColor("#e5e5e4")
+        mLinePaint.color = Color.parseColor("#e5e5e4")
+        invalidate()
+    }
+
+    fun setDotRadius(radius: Int) = apply {
+        mRadius = radius.toFloat()
+        invalidate()
+    }
+
 
 }
